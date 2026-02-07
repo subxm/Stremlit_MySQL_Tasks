@@ -2,6 +2,9 @@
 
 A web-based application built using **Streamlit + MySQL** to manage and analyze student performance data.
 
+# Preview 
+[https://student-performance-op.streamlit.app/]
+
 ## 🔧 Tech Stack
 - Frontend: Streamlit
 - Backend: Python
@@ -22,3 +25,8 @@ students(id, name, age, subject, marks)
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
+```
+## 🚀 Deployment Note
+- This application is deployed on Streamlit Cloud for UI demonstration.
+
+- The MySQL database is configured locally, so live CRUD operations are demonstrated via screenshots.

@@ -6,18 +6,15 @@ import matplotlib.pyplot as plt
 
 # ---------------- DB CONNECTION ----------------
 def get_connection():
-    # If running on Streamlit Cloud
-    if os.getenv("STREAMLIT_SERVER_RUNNING"):
-        st.warning("⚠️ Database is not available in the deployed version.")
+    try:
+        return mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="shubham",
+            database="student_db"
+        )
+    except Exception:
         return None
-
-    # Local MySQL connection
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="shubham",
-        database="student_db"
-    )
 
 
 # ---------------- FUNCTIONS ----------------
