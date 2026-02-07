@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import mysql.connector
 import pandas as pd
@@ -5,16 +6,26 @@ import matplotlib.pyplot as plt
 
 # ---------------- DB CONNECTION ----------------
 def get_connection():
+    # If running on Streamlit Cloud
+    if os.getenv("STREAMLIT_SERVER_RUNNING"):
+        st.warning("⚠️ Database is not available in the deployed version.")
+        return None
+
+    # Local MySQL connection
     return mysql.connector.connect(
         host="localhost",
         user="root",
-        password="shubham",   # <-- your password
+        password="shubham",
         database="student_db"
     )
+
 
 # ---------------- FUNCTIONS ----------------
 def add_student(name, age, subject, marks):
     conn = get_connection()
+    if conn is None:
+        return
+
     cur = conn.cursor()
     cur.execute(
         "INSERT INTO students (name, age, subject, marks) VALUES (%s,%s,%s,%s)",
@@ -23,25 +34,38 @@ def add_student(name, age, subject, marks):
     conn.commit()
     conn.close()
 
+
 def fetch_data():
     conn = get_connection()
+    if conn is None:
+        return pd.DataFrame()
+
     df = pd.read_sql("SELECT * FROM students", conn)
     conn.close()
     return df
 
+
 def update_marks(student_id, marks):
     conn = get_connection()
+    if conn is None:
+        return
+
     cur = conn.cursor()
     cur.execute("UPDATE students SET marks=%s WHERE id=%s", (marks, student_id))
     conn.commit()
     conn.close()
 
+
 def delete_student(student_id):
     conn = get_connection()
+    if conn is None:
+        return
+
     cur = conn.cursor()
     cur.execute("DELETE FROM students WHERE id=%s", (student_id,))
     conn.commit()
     conn.close()
+
 
 # ---------------- UI ----------------
 st.set_page_config(page_title="Student Performance", layout="wide")
