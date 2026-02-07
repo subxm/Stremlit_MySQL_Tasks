@@ -24,16 +24,5 @@ pip install -r requirements.txt
 streamlit run app.py
 
 
-## 📸 Screenshots
-
-### ➕ Add Student
-![Add Student](screenshots/add_student.png)
-
-### 📋 View Students
-![View Students](screenshots/view_student.png)
-
-
-### 📊 Analysis Dashboard
-![Analysis](screenshots/analysis.png)
 
 
