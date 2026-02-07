@@ -22,7 +22,7 @@ students(id, name, age, subject, marks)
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
-
+```
 ## 🚀 Deployment Note
 This application is deployed on Streamlit Cloud for UI demonstration.
 
