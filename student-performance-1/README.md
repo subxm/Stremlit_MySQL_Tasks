@@ -22,7 +22,3 @@ students(id, name, age, subject, marks)
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
-
-
-
-
