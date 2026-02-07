@@ -24,6 +24,6 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 ## 🚀 Deployment Note
-This application is deployed on Streamlit Cloud for UI demonstration.
+- This application is deployed on Streamlit Cloud for UI demonstration.
 
-The MySQL database is configured locally, so live CRUD operations are demonstrated via screenshots.
+- The MySQL database is configured locally, so live CRUD operations are demonstrated via screenshots.
