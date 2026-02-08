@@ -4,6 +4,10 @@ A full-stack web application built using **Streamlit** and **MySQL** to manage s
 
 ---
 
+## Preview
+
+[https://student-attendance-marks10.streamlit.app/]
+
 ## 🚀 Features
 
 - 🔐 Login system (session-based)
