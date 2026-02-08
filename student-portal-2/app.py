@@ -3,26 +3,42 @@ import mysql.connector
 import pandas as pd
 from datetime import date
 
-# ================== DB CONFIG ==================
-DB_CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "shubham",   # 🔴 CHANGE THIS
-    "database": "student_portal"
-}
+# =========================
+# PAGE CONFIG
+# =========================
+st.set_page_config(page_title="Student Attendance & Marks Portal", layout="wide")
 
-conn = mysql.connector.connect(**DB_CONFIG)
-cursor = conn.cursor(dictionary=True)
+# =========================
+# MYSQL CONNECTION (SAFE)
+# =========================
+conn = None
+cursor = None
+db_connected = True
 
-# ================== SESSION ==================
+try:
+    conn = mysql.connector.connect(
+        host="localhost",          # works locally
+        user="root",
+        password="YOUR_PASSWORD",  # 🔴 CHANGE THIS
+        database="student_portal"
+    )
+    cursor = conn.cursor(dictionary=True)
+except:
+    db_connected = False
+
+# =========================
+# SESSION STATE
+# =========================
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# ================== LOGIN ==================
+# =========================
+# LOGIN
+# =========================
 if not st.session_state.logged_in:
     st.title("Student Portal Login")
 
-    with st.form("login_form"):
+    with st.form("login"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         submit = st.form_submit_button("Login")
@@ -37,19 +53,36 @@ if not st.session_state.logged_in:
 
     st.stop()
 
-# ================== HELPERS ==================
+# =========================
+# DEMO MODE WARNING
+# =========================
+if not db_connected:
+    st.warning(
+        "⚠️ Database not connected.\n\n"
+        "This deployed version is for **UI / demo purposes only**.\n"
+        "Full functionality works in **local execution with MySQL**."
+    )
+
+# =========================
+# HELPER
+# =========================
 def get_students():
+    if not db_connected:
+        return pd.DataFrame(columns=["id", "roll_no", "name", "class"])
     cursor.execute("SELECT * FROM students")
     return pd.DataFrame(cursor.fetchall())
 
-# ================== SIDEBAR ==================
-st.sidebar.title("Menu")
+# =========================
+# SIDEBAR
+# =========================
 menu = st.sidebar.selectbox(
-    "Select Option",
+    "Menu",
     ["Add Student", "Mark Attendance", "Add Marks", "Attendance History", "Reports"]
 )
 
-# ================== ADD STUDENT ==================
+# =========================
+# ADD STUDENT
+# =========================
 if menu == "Add Student":
     st.header("Add Student")
 
@@ -60,116 +93,132 @@ if menu == "Add Student":
         submit = st.form_submit_button("Add Student")
 
         if submit:
-            try:
-                cursor.execute(
-                    "INSERT INTO students (roll_no, name, class) VALUES (%s,%s,%s)",
-                    (roll, name, class_)
-                )
-                conn.commit()
-                st.success("Student Added Successfully")
-            except:
-                st.error("Roll No already exists")
+            if not db_connected:
+                st.error("Database not available in deployed version.")
+            else:
+                try:
+                    cursor.execute(
+                        "INSERT INTO students (roll_no, name, class) VALUES (%s,%s,%s)",
+                        (roll, name, class_)
+                    )
+                    conn.commit()
+                    st.success("Student Added")
+                except:
+                    st.error("Roll No already exists")
 
-# ================== MARK ATTENDANCE ==================
+# =========================
+# MARK ATTENDANCE
+# =========================
 elif menu == "Mark Attendance":
     st.header("Mark Attendance")
 
     students = get_students()
 
     if students.empty:
-        st.error("No students found")
+        st.info("No student data available.")
     else:
         students["label"] = students["name"] + " (" + students["roll_no"] + ")"
-
         student = st.selectbox("Student", students["label"])
         status = st.radio("Status", ["Present", "Absent"])
 
         if st.button("Submit Attendance"):
-            sid = int(students.loc[students["label"] == student, "id"].values[0])
+            if not db_connected:
+                st.error("Attendance feature disabled in deployed version.")
+            else:
+                sid = int(students.loc[students["label"] == student, "id"].values[0])
 
-            cursor.execute(
-                "INSERT INTO attendance (student_id, date, status) VALUES (%s,%s,%s)",
-                (sid, date.today(), status)
-            )
-            conn.commit()
-            st.success("Attendance Recorded")
+                cursor.execute(
+                    "INSERT INTO attendance (student_id, date, status) VALUES (%s,%s,%s)",
+                    (sid, date.today(), status)
+                )
+                conn.commit()
+                st.success("Attendance Recorded")
 
-
-# ================== ADD MARKS ==================
+# =========================
+# ADD MARKS
+# =========================
 elif menu == "Add Marks":
     st.header("Add Marks")
 
     students = get_students()
 
     if students.empty:
-        st.error("No students found")
+        st.info("No student data available.")
     else:
         students["label"] = students["name"] + " (" + students["roll_no"] + ")"
-
         student = st.selectbox("Student", students["label"])
         subject = st.selectbox("Subject", ["Maths", "Physics", "Chemistry"])
         marks = st.number_input("Marks", 0, 100)
 
         if st.button("Add Marks"):
-            sid = int(students.loc[students["label"] == student, "id"].values[0])
-            marks = int(marks)
+            if not db_connected:
+                st.error("Marks feature disabled in deployed version.")
+            else:
+                sid = int(students.loc[students["label"] == student, "id"].values[0])
+                marks = int(marks)
 
-            cursor.execute(
-                "INSERT INTO marks (student_id, subject, marks) VALUES (%s,%s,%s)",
-                (sid, subject, marks)
-            )
-            conn.commit()
-            st.success("Marks Added Successfully")
+                cursor.execute(
+                    "INSERT INTO marks (student_id, subject, marks) VALUES (%s,%s,%s)",
+                    (sid, subject, marks)
+                )
+                conn.commit()
+                st.success("Marks Added")
 
-
-# ================== ATTENDANCE HISTORY ==================
+# =========================
+# ATTENDANCE HISTORY
+# =========================
 elif menu == "Attendance History":
     st.header("Attendance History")
 
-    cursor.execute("""
-        SELECT s.name, s.roll_no, a.date, a.status
-        FROM attendance a
-        JOIN students s ON a.student_id = s.id
-        ORDER BY a.date DESC
-    """)
-    df = pd.DataFrame(cursor.fetchall())
+    if not db_connected:
+        st.info("Attendance history unavailable in deployed version.")
+    else:
+        cursor.execute("""
+            SELECT s.name, s.roll_no, a.date, a.status
+            FROM attendance a
+            JOIN students s ON a.student_id = s.id
+            ORDER BY a.date DESC
+        """)
+        df = pd.DataFrame(cursor.fetchall())
+        st.dataframe(df)
 
-    st.dataframe(df)
-
-# ================== REPORTS ==================
+# =========================
+# REPORTS
+# =========================
 elif menu == "Reports":
     st.header("Student Reports")
 
-    students = get_students()
+    if not db_connected:
+        st.info("Reports unavailable in deployed version.")
+    else:
+        students = get_students()
 
-    for _, s in students.iterrows():
-        st.subheader(f"{s['name']} ({s['roll_no']})")
+        for _, s in students.iterrows():
+            st.subheader(f"{s['name']} ({s['roll_no']})")
 
-        # Attendance %
-        cursor.execute(
-            "SELECT status FROM attendance WHERE student_id=%s",
-            (s["id"],)
-        )
-        att = pd.DataFrame(cursor.fetchall())
+            cursor.execute(
+                "SELECT status FROM attendance WHERE student_id=%s",
+                (int(s["id"]),)
+            )
+            att = pd.DataFrame(cursor.fetchall())
 
-        if not att.empty:
-            percent = round((att["status"] == "Present").mean() * 100, 2)
-            st.write("Attendance %:", percent)
-        else:
-            st.write("Attendance %: N/A")
+            if not att.empty:
+                percent = round((att["status"] == "Present").mean() * 100, 2)
+                st.write("Attendance %:", percent)
+            else:
+                st.write("Attendance %: N/A")
 
-        # Marks + Result
-        cursor.execute(
-            "SELECT subject, marks FROM marks WHERE student_id=%s",
-            (s["id"],)
-        )
-        marks = pd.DataFrame(cursor.fetchall())
+            cursor.execute(
+                "SELECT subject, marks FROM marks WHERE student_id=%s",
+                (int(s["id"]),)
+            )
+            marks_df = pd.DataFrame(cursor.fetchall())
 
-        if not marks.empty:
-            st.dataframe(marks)
-            result = "Pass" if marks["marks"].mean() >= 40 else "Fail"
-            st.write("Result:", result)
-        else:
-            st.write("No marks available")
+            if not marks_df.empty:
+                st.dataframe(marks_df)
+                result = "Pass" if marks_df["marks"].mean() >= 40 else "Fail"
+                st.write("Result:", result)
+            else:
+                st.write("No marks available")
 
-        st.divider()
+            st.divider()
