@@ -3,6 +3,8 @@
 A shop inventory and billing system built using **Streamlit** and **MySQL**.
 
 ---
+## Preview
+[https://inventory-billling-app.streamlit.app/]
 
 ## 🚀 Features
 - Add products (name, price, stock)
